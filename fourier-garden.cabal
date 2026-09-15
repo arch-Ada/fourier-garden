@@ -1,0 +1,56 @@
+cabal-version:      3.0
+name:               fourier-garden
+version:            0.1.0.0
+synopsis:           Interactive amateur-radio Fourier playground
+category:           Education, Signal Processing
+build-type:         Simple
+license:            GPL-3.0-or-later
+license-file:       LICENSE
+
+common warnings
+    ghc-options: -Wall -Wcompat -Widentities -Wincomplete-uni-patterns
+    default-language: GHC2021
+
+library
+    import: warnings
+    hs-source-dirs: src
+    exposed-modules:
+        RadioLab.Signal
+        RadioLab.Fourier
+        RadioLab.Modulation
+        RadioLab.Filter
+        RadioLab.Plot
+    build-depends:
+        base >=4.16 && <5
+
+executable fourier-garden
+    import: warnings
+    ghc-options: -threaded
+    hs-source-dirs: app, src
+    main-is: Main.hs
+    other-modules:
+        RadioLab.App
+        RadioLab.Signal
+        RadioLab.Fourier
+        RadioLab.Modulation
+        RadioLab.Filter
+        RadioLab.Plot
+    build-depends:
+        base >=4.16 && <5,
+        brick >=1.9,
+        vty >=6
+
+test-suite fourier-garden-tests
+    import: warnings
+    type: exitcode-stdio-1.0
+    hs-source-dirs: test, src
+    main-is: Main.hs
+    other-modules:
+        RadioLab.Signal
+        RadioLab.Fourier
+        RadioLab.Modulation
+        RadioLab.Filter
+        RadioLab.Plot
+    build-depends:
+        base >=4.16 && <5,
+        QuickCheck >=2.16 && <2.19
