@@ -1,0 +1,34 @@
+name: CI
+
+on:
+  push:
+  pull_request:
+
+permissions:
+  contents: read
+
+jobs:
+  build-and-test:
+    runs-on: ubuntu-latest
+
+    steps:
+      - name: Check out repository
+        uses: actions/checkout@v4
+
+      - name: Set up Haskell
+        uses: haskell-actions/setup@v2
+        with:
+          ghc-version: "9.8.4"
+          cabal-version: "latest"
+
+      - name: Update package index
+        run: cabal update
+
+      - name: Check package
+        run: cabal check
+
+      - name: Build
+        run: cabal build all
+
+      - name: Test
+        run: cabal test all
