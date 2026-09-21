@@ -21,7 +21,8 @@ RUN cabal build exe:fourier-garden \
     && mkdir -p /out \
     && cp "$(cabal list-bin exe:fourier-garden)" /out/fourier-garden
 
-# ---- Small browser-demo runtime ----------------------------------------
+
+# ---- Browser-demo runtime -----------------------------------------------
 FROM debian:13-slim
 
 ARG TARGETARCH
@@ -32,9 +33,9 @@ RUN apt-get update && apt-get install -y --no-install-recommends \
     tini \
     libgmp10 \
     libncursesw6 \
+    libnuma1 \
     && rm -rf /var/lib/apt/lists/*
 
-# ttyd publishes ARM64 binaries; Docker TARGETARCH is "arm64".
 RUN case "$TARGETARCH" in \
       arm64) TTYD_ARCH="aarch64" ;; \
       amd64) TTYD_ARCH="x86_64" ;; \
@@ -46,6 +47,10 @@ RUN case "$TARGETARCH" in \
     && chmod +x /usr/local/bin/ttyd
 
 COPY --from=haskell-build /out/fourier-garden /usr/local/bin/fourier-garden
+
+# Make the Docker build fail if any shared library is missing.
+RUN ldd /usr/local/bin/fourier-garden \
+    && ! ldd /usr/local/bin/fourier-garden | grep -q "not found"
 
 RUN useradd --create-home --uid 10001 demo
 
