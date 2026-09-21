@@ -17,10 +17,9 @@ RUN cabal update
 COPY app ./app
 COPY src ./src
 
-RUN cabal build fourier-garden \
+RUN cabal build exe:fourier-garden \
     && mkdir -p /out \
-    && cp "$(cabal list-bin fourier-garden)" /out/fourier-garden
-
+    && cp "$(cabal list-bin exe:fourier-garden)" /out/fourier-garden
 
 # ---- Small browser-demo runtime ----------------------------------------
 FROM debian:13-slim
