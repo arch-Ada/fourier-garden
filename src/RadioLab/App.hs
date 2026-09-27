@@ -35,6 +35,7 @@ runRadioLab = do
     _ <- defaultMain app initialModel
     pure ()
 
+-- A startup preference; rendering still uses the actual terminal dimensions.
 requestTerminalSize :: Int -> Int -> IO ()
 requestTerminalSize rows cols = do
     printf "\ESC[8;%d;%dt" rows cols
@@ -70,23 +71,31 @@ attributes = attrMap V.defAttr
 drawUI :: Model -> [Widget Name]
 drawUI model =
     [ centerLayer
+        $ hLimit 100
         $ borderWithLabel (withAttr (attrName "title") (str " Fourier Garden · Radio Lab "))
         $ padAll 1
-        $ vBox
-            [ infoLine model
-            , padTop (Pad 1) $ hBorder
-            , hBox
-                [ withAttr (attrName "accent") (str "TIME DOMAIN")
-                , str $ printf "   %.3f ms window · %d samples" (sampledWindowMs model) (length timeSamples)
-                , if envelopeVisible model then withAttr (attrName "dim") (str " · envelope") else emptyWidget
+        $ Widget Greedy Fixed $ do
+            ctx <- getContext
+            let width = availWidth ctx
+                narrow = width < 70
+                controlHeight = if narrow then 9 else 3
+                -- Nine other rows hold headings, facts, borders and spacing.
+                plotHeight = clampValue 0 11 ((availHeight ctx - 9 - controlHeight) `div` 2)
+            render $ vBox
+                [ infoLine model
+                , padTop (Pad 1) $ hBorder
+                , hBox
+                    [ withAttr (attrName "accent") (str "TIME DOMAIN")
+                    , str $ printf "   %.3f ms window · %d samples" (sampledWindowMs model) (length timeSamples)
+                    , if envelopeVisible model then withAttr (attrName "dim") (str " · envelope") else emptyWidget
+                    ]
+                , strLines (plotWaveWithEnvelope width plotHeight timeSamples envelopeSamples)
+                , hBorder
+                , withAttr (attrName "accent") (str "FREQUENCY DOMAIN")
+                , strLines (plotBars width plotHeight magnitudes)
+                , padTop (Pad 1) (spectrumFacts model bins)
+                , padTop (Pad 1) (controls narrow model)
                 ]
-            , strLines (plotWaveWithEnvelope 80 11 timeSamples envelopeSamples)
-            , hBorder
-            , withAttr (attrName "accent") (str "FREQUENCY DOMAIN")
-            , strLines (plotBars 80 11 magnitudes)
-            , padTop (Pad 1) (spectrumFacts model bins)
-            , padTop (Pad 1) (controls model)
-            ]
     ]
   where
     signal = currentSignal model
@@ -122,26 +131,26 @@ spectrumFacts model bins =
         Nothing -> str resolution
         Just f  -> str (resolution ++ printf " · strongest non-DC %.1f Hz" f)
 
-controls :: Model -> Widget Name
-controls model =
+controls :: Bool -> Model -> Widget Name
+controls narrow model =
     vBox
-        [ hBox
+        [ row
             [ control True "(m) mode    "
             , control True "([/]) time domain zoom    "
             , control (carrierAdjustable model) "(←/→) carrier    "
             , control (envelopeAdjustable model) "(e) envelope"
             ]
-        , hBox
+        , row
             [ control True "(q) quit    "
             , control True "(s/S) sample rate         "
             , control (toneAdjustable model) "(↑/↓) tone       "
             , control True "(r) reset"
             ]
-        , hBox
-            [ str "            "
-            , control (modulationAdjustable model) "(+/-) modulation"
-            ]
+        , padLeft (Pad (if narrow then 0 else 12)) $
+            control (modulationAdjustable model) "(+/-) modulation"
         ]
+  where
+    row = if narrow then vBox else hBox
 
 control :: Bool -> String -> Widget Name
 control True text = str text

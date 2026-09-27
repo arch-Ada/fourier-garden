@@ -65,8 +65,10 @@ cabal update
 cabal run fourier-garden
 ```
 
-Use a terminal with Unicode Braille support. At startup the app requests a
-85 × 38 terminal, terminals may ignore this request. The plots have a fixed width of 80 columns.
+Use a terminal with Unicode Braille support. At startup the app requests an
+85 × 38 terminal, terminals may ignore this request. The UI follows the actual
+terminal size and stays centered, with a maximum width of 100 columns. Plots
+shrink vertically when space is tight, and controls stack on narrow terminals.
 
 Run the 10 regression checks and 800 generated property cases with:
 
@@ -112,7 +114,7 @@ continuous waveform. The spectrum has no frequency ticks and uses a fixed
 change that FFT window, the time view itself is capped at 8192 samples.
 
 At the default sample rate, FFT bin spacing is 8 Hz and Nyquist is 4096 Hz.
-The spectrum spans DC through Nyquist, grouping bins into 76 columns by their
+The spectrum spans DC through Nyquist, grouping bins into the available plot columns by their
 maximum magnitude. Nearby peaks can share a column. The strongest non-DC
 readout identifies an FFT bin, it isn't an exact estimate of the input frequency.
 The plots recompute when settings change.
